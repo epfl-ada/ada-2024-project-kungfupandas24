@@ -1,13 +1,20 @@
 # Reel Realities: How Gender and Age Shape Success Across Box Office and Streaming Platforms
-## Abstract (to change for now just copy pasted)
-We decided to study the difference in representation of genders in movies. How does the proportion of male vs female actors influence revenue along different categories (genre, country, year, language…)? Does the age of the actor at the time of recording have an impact? What does that tell us about the reason for the representation of female characters? Are they represented with a goal of equality or to attract audiences through sexualization? We also would like to compare these findings between Box office movies and Streaming platform destined movies. Finally, we would like to see if the acclaim (rating) of the movies is affected in the same way as revenue.
+## Abstract (will refine later, way too short for now)
+
+Over the past decade, we have seen a rise in equal gender representation worldwide. This longstanding issue is now being addressed by various industries, including one of the most influential: the film industry. Or at least, so it seems...
+
+Are women truly being represented in an equal way to men in movies? What is the "Reel reality" behind these attempts? Is sexualization truly a thing of the past? How does this vary around the world? We will attempt to tackle these questions in our analysis to get to the bottom of the true intentions of production studios.
+
+Who runs the world? Money. Hence, to answer the questions above, we will look at the impact of gender representation on profit. Putting into evidence whether or not a secret formula has been discovered by directors to gain success through gender representation. 
+
 ## Research questions (to refine and rewrite):
 1. Male vs Female: A preliminary study on the impact on revenue in different genres and at different times. Is this the same in different countries or in different languages?
 2. What about age? How does the age of the actors affect revenue according to the categories above.
 3. How does it compare to streaming platforms? Are movies made for these platforms different? Have box office movies adapted since the rise of streaming?
 4. What are the social reasons behind the presence of female characters in movies? Is it due to sexualization or genuine equality of representation?
 5. Are these results different when looking at the acclaim (ratings) of a movie instead of revenue?
-## Additional datasets (develop on each dataset):
+
+## Additional datasets (waiting for complete final confirmation before writing):
 1. IMDB dataset
 2. Google trends
 ## Methods (develop once finished):
