@@ -41,7 +41,7 @@ Who runs the world? Money. Hence, to answer the questions above, we will look at
 1. Regression Analysis: Define success as a binary outcome (revenue to cost ratio), predict the likelihood of a movie's success based on the categories mentioned.
 2. Time Series Analysis: Analyze how trends in gender roles, lead actor age, and box office success have changed over time. Could compare to socio-economic events that would have an impact on box office thanks to Google trends.
 3. Cluster Analysis (instead of regression analysis): Group movies based on characteristics (genre, gender of lead roles, and character archetypes). How these groupings correlate with success.
-4. Text Mining and Natural Language Processing (NLP): Analyze plot summaries and reviews for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles).
+4. Text Mining and Natural Language Processing (NLP): Analyze plot summaries and reviews for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles). While the text remained in its raw form for ChatGPT Plus, future trials involving models like T5 or BERT will require further preprocessing. This includes tokenization to convert text into subword units compatible with model tokenizers, truncation or padding to adhere to maximum input length constraints, and other normalization steps such as lowercasing or punctuation removal, depending on the model's requirements.
 
 ## Proposed timeline:
 - 29/11: Linear regressions completed and analyzed. Success metric revised and finalized
