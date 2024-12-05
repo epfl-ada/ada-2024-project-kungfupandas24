@@ -5,9 +5,9 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 def calculate_roi(df, budget_col, revenue_col):
     condition = (df[budget_col].notna() & df[budget_col].ne(0) &
                  df[revenue_col].notna() & df[revenue_col].ne(0))
-    df = df[condition]
-    df["ROI"] = ((df[revenue_col] - df[budget_col]) / df[budget_col])
-    return df
+    df_filtered = df[condition].copy()
+    df_filtered["ROI"] = ((df_filtered[revenue_col] - df_filtered[budget_col]) / df_filtered[budget_col])
+    return df_filtered
 
 def scale_features(df):
     scaler = StandardScaler()
