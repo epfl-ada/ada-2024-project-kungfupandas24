@@ -1,36 +1,29 @@
 import pandas as pd
 import numpy as np
 import unicodedata
+import re
+from collections import Counter
 
-# Fonction pour normaliser le texte (noms ou titres)
-def normalize_text(text):
-    if isinstance(text, str):
-        text = text.lower().strip()
-        text = "".join(
-            char for char in unicodedata.normalize("NFD", text) if unicodedata.category(char) != "Mn"
-        )
-        text = " ".join(text.split())  
-    return text
 
 def get_streaming_dataframe():
     # We load streaming platform data files
     netflix = pd.read_csv("data/data_streaming/netflix_titles.csv", na_values="\\N")
     disney = pd.read_csv("data/data_streaming/disney_plus_titles.csv", na_values="\\N")
     amazon = pd.read_csv("data/data_streaming/amazon_prime_titles.csv", na_values="\\N")
-    hulu = pd.read_csv("data/data_streaming/hulu_titles.csv", na_values="\\N")
+    #hulu = pd.read_csv("data/data_streaming/hulu_titles.csv", na_values="\\N")
     
     #Then, we keep only movies
     netflix_movies = netflix[netflix["type"] == "Movie"].copy()
     amazon_movies = amazon[amazon["type"] == "Movie"].copy()
-    hulu_movies = hulu[hulu["type"] == "Movie"].copy()
+    #hulu_movies = hulu[hulu["type"] == "Movie"].copy()
     disney_movies = disney[disney["type"] == "Movie"].copy()
     netflix_movies["Platform"] = "Netflix"
-    hulu_movies["Platform"] = "Hulu"
+    #hulu_movies["Platform"] = "Hulu"
     amazon_movies["Platform"] = "Amazon"
     disney_movies["Platform"] = "Disney"
 
     #We combine the dataframes
-    all_movies = pd.concat([netflix_movies, hulu_movies, amazon_movies, disney_movies], ignore_index=True)
+    all_movies = pd.concat([netflix_movies, amazon_movies, disney_movies], ignore_index=True)
     all_movies_cleaned = all_movies.dropna(subset=["cast"])
 
     #The goal in this part is to find the gender of the streaming characters
@@ -135,6 +128,8 @@ def get_streaming_dataframe():
             return 1
         else:
             return 0
+        
+    #streaming.drop(columns=["Age_ratings"], inplace=True)
 
     streaming['duration'] = pd.to_numeric(streaming['duration'].str.replace(' min', '', regex=False), errors='coerce')
     streaming["Is_Adult"] = streaming["rating"].apply(is_adult_rating)
@@ -144,5 +139,94 @@ def get_streaming_dataframe():
     new_column_names = ["Show_id", "Type","Movie_name", "Director", "Cast", "Movie_countries", "Date_added", "Movie_release_date", "Age_ratings","Movie_runtime","Movie_genres", "Description", "Platform","Male_actors", "Female_actors", "Average_Rating", "Num_Votes", "Is_Adult"]
     streaming.columns = new_column_names
 
+    streaming_new=streaming[streaming["Movie_countries"].notna()]
+    kggle_languages=pd.read_csv("data/data_streaming/countries-languages.csv")
+    kggle_languages["Languages Spoken"] = kggle_languages["Languages Spoken"].apply(clean_and_limit_languages)
+    country_language_map = kggle_languages.set_index("Country")["Languages Spoken"].to_dict()
+
+    def get_languages(countries):
+        if isinstance(countries, str):
+        
+            country_list = countries.split(", ")
+            languages = [country_language_map.get(country.strip(), None) for country in country_list]
+    
+            languages = [lang for lang in languages if lang]  
+            return ", ".join(set(languages)) 
+        return np.nan  
+
+    streaming_new["Movie_languages"] = streaming_new["Movie_countries"].apply(get_languages)
+
+    all_languages = [lang.strip() for langs in streaming_new["Movie_languages"].dropna() for lang in langs.split(", ")]
+    language_counts = Counter(all_languages)
+    #Find the rarest languages and remove it 
+    #we do this because streaming platform doesn't have all languages
+    languages_to_remove = {lang for lang, count in language_counts.items() if count <= 10}
+    
+    def filter_rare_languages(languages):
+        if isinstance(languages, str):
+
+            filtered_languages = [lang for lang in languages.split(", ") if lang not in languages_to_remove]
+            return ", ".join(filtered_languages) if filtered_languages else None  
+        return languages
+
+    streaming_new["Movie_languages"] = streaming_new["Movie_languages"].apply(filter_rare_languages)
+    streaming=streaming_new.copy()
+
+    streaming["Movie_genres"] = streaming["Movie_genres"].str.replace("Documentaries", "", regex=False)
+    streaming["Movie_genres"] = streaming["Movie_genres"].str.replace("International Movies", "", regex=False)
+    streaming["Movie_genres"] = streaming["Movie_genres"].str.replace(", ,", ",", regex=False) 
+    streaming["Movie_genres"] = streaming["Movie_genres"].str.strip(", ")  
+
 
     return streaming
+
+
+#Normalize test
+def normalize_text(text):
+    if isinstance(text, str):
+        text = text.lower().strip()
+        text = "".join(
+            char for char in unicodedata.normalize("NFD", text) if unicodedata.category(char) != "Mn"
+        )
+        text = " ".join(text.split())  
+    return text
+
+#cleaning languages dataset
+def clean_and_limit_languages(languages):
+    if isinstance(languages, str):
+        languages_no_parentheses = re.sub(r"\s*\(.*?\)", "", languages)
+        languages_cleaned = re.sub(r"\s*and.*", "", languages_no_parentheses)
+        languages_no_digits = re.sub(r"\d+%?", "", languages_cleaned)
+        languages_cleaned_final = re.sub(r"[.,;]", "", languages_no_digits).strip()
+        first_language = re.split(r"[,\s]+", languages_cleaned_final)[0] if languages_cleaned_final else None
+        return first_language
+    return None 
+
+
+
+categories = {
+    "Drama & Emotion": [
+        "Drama", "Dramas", "Biographical", "Coming of Age", "Faith & Spirituality", "Faith and Spirituality",
+          "Historical", "Romance", "Romantic Movies"
+        ],
+    "Action & Adventure": [
+        "Action", "Action & Adventure", "Action-Adventure", "Adventure", "Spy/Espionage", "Military and War", 
+        "Superhero", "Survival", "Thriller", "Thrillers"
+    ],
+    "Science Fiction & Fantasy": [
+        "Sci-Fi & Fantasy", "Science Fiction", "Fantasy", "Horror", "Horror Movies"
+    ],
+    "Comedy & Light-Hearted": [
+        "Comedy", "Comedies", "Stand-Up Comedy", "Romantic Comedy", "Parody", "Variety", "Buddy"
+    ]
+}
+
+def classify_genre(genres):
+    if not isinstance(genres, str) or pd.isna(genres):
+        return "Other"  
+    genre_list = genres.split(", ") 
+    for genre in genre_list:
+        for category, genre_names in categories.items():
+            if genre in genre_names:
+                return category  
+    return "Other"  
