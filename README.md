@@ -8,10 +8,10 @@ Are women truly being represented in an equal way to men in movies? What is the 
 Who runs the world? Money. Hence, to answer the questions above, we will look at the impact of gender representation on ROI (Return On Investment) and on our own new "Success" metric. Putting into evidence whether or not a secret formula has been discovered by directors to gain success through gender representation.
 
 ## Research questions:
-1. How can we measure success? Is success solely based on ROI? On ratings? To answer these questions we will attempt to create our own metric to evaluate success.
-2. What is the impact of an actor's gender and age on success, ratings or ROI? How does it vary across time, genre and countries?
-3. How does it compare to movies made for streaming platforms? Do they follow a different formula? Have box office movies adapted since the rise of streaming?
-4. What are the social reasons behind the presence of female characters in movies? Is it due to sexualization or genuine equality of representation?
+1. How can we measure success? Success is often defined by ratings for cinephiles and return on investment (ROI) for investors. Both parties are just as crucial to the true success of a movie with the former being the source of acclaim and the latter the source of funds for production. Why not combine both? Our new WS (Weighted Success) metric attempts to encapsulate the importance of both factors.
+2. What are the factors that affect success through each of its definitions? How does it vary from one country to the next? From one production studio to the next? Or even according to the prominent actor genders? Is there a formula for success?
+3. How does it compare to movies made for streaming platforms? These movies have less trouble bringing in viewers thanks to their easy and cheap access online. Hence, do they follow a different formula? Have box office movies adapted since the rise of streaming?
+4. What are the social reasons behind the presence of female characters in movies? It is common to watch a movie and realize that the female support character may only be present to attract the male gaze. To what extent do production studios abuse of this? The [Bechdel Test](https://www.merriam-webster.com/dictionary/Bechdel%20Test) is a known metric to measure this. However, it is commonly criticised for being too surface level. Is there a better way to measure sexualization in movies?
 
 ## Additional datasets:
 <table style="border: 1px solid; border-collapse: collapse; width: 100%;">
@@ -38,10 +38,9 @@ Who runs the world? Money. Hence, to answer the questions above, we will look at
 </table>
 
 ## Methods:
-1. Regression Analysis: Define success as a binary outcome (revenue to cost ratio), predict the likelihood of a movie's success based on the categories mentioned.
-2. Time Series Analysis: Analyze how trends in gender roles, lead actor age, and box office success have changed over time. Could compare to socio-economic events that would have an impact on box office thanks to Google trends.
-3. Cluster Analysis: Group movies based on characteristics (genre, gender of lead roles, and character archetypes). How these groupings correlate with success.
-4. Text Mining and Natural Language Processing (NLP): Analyze plot summaries and reviews for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles).
+1. Definition of a new metric: The WS (Weighted Success) metric is introduced in [Section 2](results.ipynb#2-our-success-metric) of our analysis. Through financial data we calculate the Return on Investment of each movie. We combine ROI with the ratings obtained from the IMDB dataset.
+2. Regression Analysis: We run a regression analysis on both the box office movies ([Section 3](results.ipynb#3-gender-and-age-vs-success)) and movies from streaming platforms ([Section 4](results.ipynb#4-how-does-it-compare-to-streaming-platforms)). The goal is to study the impact of features such as actor gender count, adult rating, movie genre and more on the success of a movie. A different regression model is run using ROI, ratings and Weighted Success to study the varying impact on each metric.
+3. Text Mining and Natural Language Processing (NLP): Analyze plot summaries and reviews for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles).
    While the text remained in its raw form for ChatGPT Plus, future trials involving models like T5 or BERT will require further preprocessing. This includes tokenization to convert text into subword units compatible with model tokenizers, truncation or padding to adhere to maximum input length constraints, and other normalization steps such as lowercasing or punctuation removal, depending on the model's requirements.
 
 ## Proposed timeline:
@@ -56,7 +55,3 @@ Who runs the world? Money. Hence, to answer the questions above, we will look at
 - Section 5 (Sexualization study): Fawzia, Leila and Edouard
 - Data story: Fawzia and others (TBD)
 - Final touches: Everyone
-
-## Questions for TAs:
-- What do you think of our success metric? Is it relevant? Do we have any ways of improving it?
-- Our main limitaion is the absence of information on revenue and costs, reducing our dataset to a few thousand datapoints. Is that still enough to infer significant results?
