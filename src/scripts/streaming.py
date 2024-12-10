@@ -54,6 +54,7 @@ def get_streaming_dataframe():
     names_df = pd.concat([actor_cmu_df, male_df, female_df], ignore_index=True)
     names_df["first_name_normalized"] = names_df["first_name"].apply(normalize_text)
 
+    all_movies_cleaned = all_movies_cleaned.copy()
     all_movies_cleaned["cast"] = all_movies_cleaned["cast"].str.split(", ")
     streaming_actors = all_movies_cleaned.explode("cast").dropna(subset=["cast"]).copy()
     streaming_actors["cast"] = streaming_actors["cast"].astype(str)
@@ -93,8 +94,9 @@ def get_streaming_dataframe():
                 not_found_count += 1
         return pd.Series([male_count, female_count, not_found_count])
 
-
+    all_movies_cleaned = all_movies_cleaned.copy()
     all_movies_cleaned["cast"] = all_movies_cleaned["cast"].apply(lambda x: ", ".join(x))
+    all_movies_cleaned = all_movies_cleaned.copy()
     all_movies_cleaned[["male_count", "female_count", "not_found_count"]] = all_movies_cleaned["cast"].apply(
         lambda cast: count_genders(cast, actor_gender_dict))
     
@@ -108,7 +110,7 @@ def get_streaming_dataframe():
         on="tconst",
         how="inner")
 
-    
+    all_movies_cleaned = all_movies_cleaned.copy()
     all_movies_cleaned["title_normalized"] = all_movies_cleaned["title"].apply(normalize_text)
     merged_df["primaryTitle_normalized"] = merged_df["primaryTitle"].apply(normalize_text)
 
@@ -154,7 +156,11 @@ def get_streaming_dataframe():
             return ", ".join(set(languages)) 
         return np.nan  
 
+    streaming_new = streaming_new.copy()
     streaming_new["Movie_languages"] = streaming_new["Movie_countries"].apply(get_languages)
+    streaming_new = streaming_new.dropna(subset=["Movie_languages"])  
+    streaming_new = streaming_new[streaming_new["Movie_languages"].str.strip() != ""]  
+
 
     all_languages = [lang.strip() for langs in streaming_new["Movie_languages"].dropna() for lang in langs.split(", ")]
     language_counts = Counter(all_languages)
@@ -169,6 +175,7 @@ def get_streaming_dataframe():
             return ", ".join(filtered_languages) if filtered_languages else None  
         return languages
 
+    streaming_new = streaming_new.copy()
     streaming_new["Movie_languages"] = streaming_new["Movie_languages"].apply(filter_rare_languages)
     streaming=streaming_new.copy()
 
