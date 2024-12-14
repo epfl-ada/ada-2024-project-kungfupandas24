@@ -7,10 +7,10 @@ from collections import Counter
 
 def get_streaming_dataframe():
     # We load streaming platform data files
-    netflix = pd.read_csv("data/data_streaming/netflix_titles.csv", na_values="\\N")
-    disney = pd.read_csv("data/data_streaming/disney_plus_titles.csv", na_values="\\N")
-    amazon = pd.read_csv("data/data_streaming/amazon_prime_titles.csv", na_values="\\N")
-    #hulu = pd.read_csv("data/data_streaming/hulu_titles.csv", na_values="\\N")
+    netflix = pd.read_csv("data/Streaming data/netflix_titles.csv", na_values="\\N")
+    disney = pd.read_csv("data/Streaming data/disney_plus_titles.csv", na_values="\\N")
+    amazon = pd.read_csv("data/Streaming data/amazon_prime_titles.csv", na_values="\\N")
+    #hulu = pd.read_csv("data/Streaming data/hulu_titles.csv", na_values="\\N")
     
     #Then, we keep only movies
     netflix_movies = netflix[netflix["type"] == "Movie"].copy()
@@ -41,10 +41,10 @@ def get_streaming_dataframe():
     actor_cmu_df.columns = ["first_name", "last_name", "gender"]
 
     
-    with open("data/data_streaming/male.txt", "r") as male_file:
+    with open("data/Streaming data/male.txt", "r") as male_file:
         male_names = [line.strip() for line in male_file.readlines()]
 
-    with open("data/data_streaming/female.txt", "r") as female_file:
+    with open("data/Streaming data/female.txt", "r") as female_file:
         female_names = [line.strip() for line in female_file.readlines()]
 
     male_df = pd.DataFrame({"first_name": male_names, "last_name": "", "gender": "M"})
@@ -72,7 +72,7 @@ def get_streaming_dataframe():
     #This data comes from the website genderize.io, which classifies gender from names
     #We take unknown_gender_df, then we uploaded on genderize.io to have 
    
-    gender_found_df = pd.read_csv("data/data_streaming/gender_actors_found.csv", sep=";")
+    gender_found_df = pd.read_csv("data/Streaming data/gender_actors_found.csv", sep=";")
     gender_found_df = gender_found_df[["first_name", "last_name", "Gender"]]
     gender_found_df.rename(columns={"Gender": "gender"}, inplace=True)
     gender_found_df["gender"] = gender_found_df["gender"].replace({"male": "M", "female": "F", "unknown": np.nan})
@@ -142,7 +142,7 @@ def get_streaming_dataframe():
     streaming.columns = new_column_names
 
     streaming_new=streaming[streaming["Movie_countries"].notna()]
-    kggle_languages=pd.read_csv("data/data_streaming/countries-languages.csv")
+    kggle_languages=pd.read_csv("data/Streaming data/countries-languages.csv")
     kggle_languages["Languages Spoken"] = kggle_languages["Languages Spoken"].apply(clean_and_limit_languages)
     country_language_map = kggle_languages.set_index("Country")["Languages Spoken"].to_dict()
 
