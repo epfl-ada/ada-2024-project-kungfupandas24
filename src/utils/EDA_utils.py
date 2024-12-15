@@ -46,6 +46,32 @@ class EDA:
         summary_table = summary_table.round(2)
 
         return summary_table
+    
+    def summary_bis(self):
+        """
+        Generate summary statistics for the numeric columns available in the DataFrame.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing min, max, mean, std, and median for numeric columns.
+        """
+        # Filter numeric columns that exist in the DataFrame
+        existing_columns = [col for col in self.numeric_columns if col in self.dataframe.columns]
+        missing_columns = [col for col in self.numeric_columns if col not in self.dataframe.columns]
+
+        # Log ignored columns
+        if missing_columns:
+            print(f"Warning: The following columns are missing and will be ignored: {missing_columns}")
+
+        # Generate summary statistics for existing columns
+        if not existing_columns:
+            raise ValueError("No numeric columns are available in the DataFrame for summarization.")
+        
+        summary_table = self.dataframe[existing_columns].agg(["min", "max", "mean", "std", "median"]).T
+        summary_table.columns = ["Min", "Max", "Mean", "SD", "Median"]
+        summary_table = summary_table.round(2)
+
+        return summary_table
+
 
     def plot_histograms(self, dep_var=["Average_ratings", "Final_movie_revenue", "ROI", "Movie_success"], bins=15):
         """
@@ -289,7 +315,7 @@ class EDA:
         plt.tight_layout()
         plt.show()
         
-        print(f"There are {len(filtered_genre_counts)} genres with more that 1000 occurences.")
+        print(f"There are {len(filtered_genre_counts)} genres with more that {threshold} occurences.")
 
         return filtered_genre_counts
     
@@ -418,8 +444,13 @@ class EDA:
             int: The number of movies available in other languages.
         """
         # Categorize rows as "English_only" or "Not_only_english"
-        self.dataframe["Language_Category"] = self.dataframe[column_name].apply(
-            lambda x: "English_only" if x.lower() == "english language" else "Not_only_english"
+
+
+        #self.dataframe["Language_Category"] = self.dataframe[column_name].apply(
+       #    lambda x: "English_only" if x.lower() == "english language" else "Not_only_english"
+        #)
+        self.dataframe["Language_Category"] = self.dataframe[column_name].fillna("").apply(
+            lambda x: "English_only" if x.lower() in ["english", "english language"] else "Not_only_english"
         )
 
         # Create dummy variables and drop the reference category
@@ -483,9 +514,10 @@ class EDA:
             None
         """
         # Categorize rows as "USA_movies" or "Non_USA_movies"
-        self.dataframe["Country_Category"] = self.dataframe[column_name].apply(
-            lambda x: "USA_movies" if x.lower() == "united states of america" else "Non_USA_movies"
+        self.dataframe["Country_Category"] = self.dataframe[column_name].fillna("").apply(
+            lambda x: "USA_movies" if x.lower() in["united states of america","United States"] else "Non_USA_movies"
         )
+
 
         # Create dummy variables and drop the reference category
         self.dataframe = pd.get_dummies(self.dataframe, columns=["Country_Category"], drop_first=True)
@@ -500,6 +532,42 @@ class EDA:
         print(
             f"There are {count_usa_movies} USA movies and {count_other_countries_movie} movies from other countries."
         )
+
+    def categorize_countries_bis(self, column_name="Movie_countries"):
+        """
+        Categorize movies as "USA_movies" or "Non_USA_movies" based on their country and create a dummy variable.
+
+        Args:
+            column_name (str): The column containing country information.
+
+        Returns:
+            None
+        """
+        # Categorize rows as "USA_movies" or "Non_USA_movies"
+        self.dataframe["Country_Category"] = self.dataframe[column_name].fillna("").apply(
+            lambda x: "USA_movies" if "united states" in str(x).lower() else "Non_USA_movies"
+        )
+
+        # Create dummy variables and drop the reference category
+        self.dataframe = pd.get_dummies(self.dataframe, columns=["Country_Category"], drop_first=True)
+
+        # Check if the expected column exists before renaming
+        if "Country_Category_USA_movies" in self.dataframe.columns:
+            self.dataframe.rename(columns={"Country_Category_USA_movies": "Is_USA_movie"}, inplace=True)
+        else:
+            print("Warning: 'Country_Category_USA_movies' column not found. Check the input data.")
+
+        # Count the number of USA movies and movies from other countries
+        if "Is_USA_movie" in self.dataframe.columns:
+            count_usa_movies = self.dataframe["Is_USA_movie"].sum()
+            count_other_countries_movie = len(self.dataframe) - count_usa_movies
+
+            print(
+                f"There are {count_usa_movies} USA movies and {count_other_countries_movie} movies from other countries."
+            )
+        else:
+            print("Error: 'Is_USA_movie' column was not created.")
+
         
     def extract_production_names(self, companies_str):
         """
@@ -595,8 +663,52 @@ class EDA:
         return merged_data
     
     def calculate_box_office(self,companies_list, box_office):
+
+        box_office["Total Worldwide Box Office"] = box_office["Total Worldwide Box Office"].replace(
+        {"\\$": "", ",": ""}, regex=True).astype(float)
         if not companies_list:
             return 0  
-        return box_office.loc[box_office["Company Name"].isin(companies_list), "Total Worldwide Box Office" ].sum()
+        return box_office.loc[box_office["Company Name"].isin(companies_list), "Total Worldwide Box Office"].sum()
+    
+    def unify_columbia_revenue(self, box_office_df, source_column="Company Name", 
+                           target_column="Production_companies_cleaned", box_office_column="Total Worldwide Box Office"):
+        """
+        Ensure the Box Office for 'Columbia Pictures Corporation' matches 'Columbia Pictures'.
+
+        Args:
+            box_office_df (pd.DataFrame): DataFrame containing box office datas.
+            source_column (str): Column where there is 'Columbia Pictures'.
+            target_column (str): Column where there is 'Columbia Pictures Corporation'.
+            box_office_column (str): Colonne contenant les revenus du box office.
+
+        Returns:
+            None
+        """
+        box_office_df.loc[
+            box_office_df[target_column] == "Columbia Pictures Corporation", box_office_column
+        ] = box_office_df.loc[
+            box_office_df[source_column] == "Columbia Pictures", box_office_column
+        ].values[0]
+     
+
+    def filter_movies_with_box_office(self, box_office_column="Box_office_companies"):
+        """
+        Filter out rows where the box office revenue is null and display the remaining count.
+
+        Args:
+            box_office_column (str): The column containing box office revenue.
+
+        Returns:
+            None
+        """
+        # Nombre de films avant filtrage
+        initial_count = len(self.dataframe)
+        
+        # Filtrer les films avec une valeur non nulle dans box_office_column
+        self.dataframe = self.dataframe[self.dataframe[box_office_column].notnull()]
+        remaining_count = len(self.dataframe)
+
+        # Afficher un message
+        print(f"After removing rows without Box Office revenue, {remaining_count} movies remain out of {initial_count}.")
 
 

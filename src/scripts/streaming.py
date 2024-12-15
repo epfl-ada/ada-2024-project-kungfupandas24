@@ -138,7 +138,7 @@ def get_streaming_dataframe():
     streaming = streaming[streaming['duration'] != 0]
     streaming.dropna(subset=['duration'], inplace=True)
 
-    new_column_names = ["Show_id", "Type","Movie_name", "Director", "Cast", "Movie_countries", "Date_added", "Movie_release_date", "Age_ratings","Movie_runtime","Movie_genres", "Description", "Platform","Male_actors", "Female_actors", "Average_Rating", "Num_Votes", "Is_Adult"]
+    new_column_names = ["Show_id", "Type","Movie_name", "Director", "Cast", "Movie_countries", "Date_added", "Movie_release_date", "Age_ratings","Movie_runtime","Movie_genres", "Description", "Platform","Male_actors", "Female_actors", "Average_ratings", "Num_votes", "Is_Adult"]
     streaming.columns = new_column_names
 
     streaming_new=streaming[streaming["Movie_countries"].notna()]
@@ -181,8 +181,60 @@ def get_streaming_dataframe():
 
     streaming["Movie_genres"] = streaming["Movie_genres"].str.replace("Documentaries", "", regex=False)
     streaming["Movie_genres"] = streaming["Movie_genres"].str.replace("International Movies", "", regex=False)
+    streaming["Movie_genres"] = streaming["Movie_genres"].str.replace("Independent Movies", "", regex=False)
     streaming["Movie_genres"] = streaming["Movie_genres"].str.replace(", ,", ",", regex=False) 
     streaming["Movie_genres"] = streaming["Movie_genres"].str.strip(", ")  
+
+    # Function to map each individual genre to a main category
+    def map_genre_to_category(genre, categories):
+        """
+        Map a single genre to its main category based on the provided dictionary.
+
+        Args:
+            genre (str): The genre to map.
+            categories (dict): Dictionary of main categories and their subgenres.
+
+        Returns:
+            str or None: The corresponding main category, or None if not found.
+        """
+        genre = genre.strip().lower()  # Remove surrounding spaces and convert to lowercase
+        for category, subgenres in categories.items():
+            if genre in [s.lower() for s in subgenres]:  # Check if the genre matches any subgenre
+                return category
+        return None  # Return None if no match is found
+
+
+    # Function to process a column of genres with multiple values
+    def process_movie_genres(genres_column, categories):
+        """
+        Process a column of genres, handle multiple genres, and map them to main categories.
+
+        Args:
+            genres_column (pd.Series): The column containing movie genres.
+            categories (dict): Dictionary of main categories and their subgenres.
+
+        Returns:
+            pd.Series: A column with mapped main categories.
+        """
+        def process_row(row):
+            genres = row.split(",")  # Split the row into individual genres by comma
+            mapped_categories = set()  # Use a set to avoid duplicate categories
+
+            for genre in genres:
+                mapped_category = map_genre_to_category(genre, categories)  # Map each genre
+                if mapped_category:  # Add the category if a match is found
+                    mapped_categories.add(mapped_category)
+            
+            # Return the categories as a comma-separated string, or 'Uncategorized' if none found
+            return ", ".join(mapped_categories) if mapped_categories else "Uncategorized"
+
+        # Apply the processing to each row in the genres column
+        return genres_column.fillna("").apply(process_row)
+
+
+    # Apply the function to the 'Movie_genres' column in the DataFrame
+    streaming["Movie_genres"] = process_movie_genres(streaming["Movie_genres"], categories)
+
 
 
     return streaming
