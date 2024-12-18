@@ -66,6 +66,9 @@ class KaggleDatasetLoader:
         Kaggle_df["budget"] = Kaggle_df["budget"].astype(float)
         Kaggle_df["revenue"] = Kaggle_df["revenue"].astype(float)
 
+        # Drop incorrect data rows where the budget is less than 1000
+        Kaggle_df = Kaggle_df[Kaggle_df["budget"] >= 1000]
+
         return Kaggle_df
 
 class NumbersDatasetLoader:

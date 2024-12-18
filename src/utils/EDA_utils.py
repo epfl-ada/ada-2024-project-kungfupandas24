@@ -10,12 +10,12 @@ class EDA:
         "Average_ratings",
         "Num_votes",
         "Movie_release_date",
+        "Movie_budget",
         "Final_movie_revenue",
         "ROI",
         "Movie_runtime",
         "Female_actors",
         "Male_actors",
-        "Movie_success"
     ]):
         """
         Initialize the EDA (Exploratory Data Analysis) class.
@@ -72,131 +72,8 @@ class EDA:
 
         return summary_table
 
-
-    def plot_histograms(self, dep_var=["Average_ratings", "Final_movie_revenue", "ROI", "Movie_success"], bins=15):
-        """
-        Plot histograms for the specified dependent variables.
-
-        Args:
-            dep_var (list): List of column names to plot histograms for.
-            bins (int): Number of bins for the histograms. Default is 15.
-
-        Returns:
-            None
-        """
-        fig, axes = plt.subplots(nrows=1, ncols=len(dep_var), figsize=(18, 6))
-        fig.suptitle("Figure 1: Histogram of Dependent Variables", fontsize=14)
-        axes = axes.flatten()
-
-        # Plot histograms for each dependent variable
-        for i, col in enumerate(dep_var):
-            if col not in self.dataframe.columns:
-                raise ValueError(f"Column '{col}' is not in the DataFrame.")
-            if i < len(axes):  # Ensure we do not exceed the number of axes
-                ax = axes[i]
-                sns.histplot(self.dataframe, x=col, kde=True, stat="density", ax=ax, bins=bins)
-                ax.set_title(f"Histogram of {col}")
-                ax.set_xlabel(col)
-                ax.set_ylabel("Frequency")
-
-        # Hide any extra subplots if there are more axes than columns
-        for j in range(i + 1, len(axes)):
-            fig.delaxes(axes[j])
-
-        # Make space for the title
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.show()
-
-    def plot_log_transformed_histograms(self, columns_to_transform=["Final_movie_revenue", "ROI"], bins=15):
-        """
-        Plot histograms for log-transformed dependent variables.
-
-        Args:
-            columns_to_transform (list): List of column names to apply log transformation and plot histograms for.
-            bins (int): Number of bins for the histograms. Default is 15.
-
-        Returns:
-            None
-        """
-        fig, axes = plt.subplots(1, 2, figsize=(12, 4))
-
-        # Histogram for each log-transformed variable
-        sns.histplot(self.dataframe["log_Final_movie_revenue"], kde=True, edgecolor="black", color="skyblue", bins=bins, ax=axes[0])
-        axes[0].set_title("Histogram of log-transformed Final_movie_revenue")
-        axes[0].set_xlabel("log_Final_Movie_revenue")
-        axes[0].set_ylabel("Frequency")
-
-        sns.histplot(self.dataframe["log_ROI"], kde=True, edgecolor="black", color="skyblue", bins=bins, ax=axes[1])
-        axes[1].set_title("Histogram of log-transformed ROI")
-        axes[1].set_xlabel("log_ROI")
-        axes[1].set_ylabel("Frequency")
-
-        plt.tight_layout()
-        plt.show()
-
-    def plot_independent_histograms(self, indep_var=["Num_votes", "Movie_release_date", "Movie_runtime", "Female_actors", "Male_actors"], bins=15):
-        """
-        Plot histograms for the specified independent variables.
-
-        Args:
-            indep_var (list): List of column names to plot histograms for.
-            bins (int): Number of bins for the histograms. Default is 15.
-
-        Returns:
-            None
-        """
-        fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(14, 8))
-        fig.suptitle("Figure 2: Histogram of Independent Variables", fontsize=14)
-
-        axes = axes.flatten()
-
-        # Plot histograms for each independent variable
-        for i, col in enumerate(indep_var):
-            if col not in self.dataframe.columns:
-                raise ValueError(f"Column '{col}' is not in the DataFrame.")
-            sns.histplot(self.dataframe, x=col, kde=True, stat="density", ax=axes[i], bins=bins)
-            axes[i].set_title(f"Histogram of {col}")
-            axes[i].set_xlabel(col)
-            axes[i].set_ylabel("Frequency")
-
-        # Hide any extra subplots if there are more axes than columns
-        for j in range(i + 1, len(axes)):
-            fig.delaxes(axes[j])
-
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.show()
-
-    def plot_log_transformed_independent_histograms(self, columns_to_transform=["Num_votes", "Movie_runtime", "Female_actors", "Male_actors"], bins=15):
-        """
-        Apply log transformation to skewed independent variables and plot histograms.
-
-        Args:
-            columns_to_transform (list): List of column names to apply log transformation and plot histograms for.
-            bins (int): Number of bins for the histograms. Default is 15.
-
-        Returns:
-            None
-        """
-
-        fig, axes = plt.subplots(nrows=1, ncols=4, figsize=(18, 6))
-        fig.suptitle("Figure 3: Histograms of Log-Transformed Independent Variables", fontsize=14)
-
-        sns.histplot(self.dataframe["log_Num_votes"], kde=True, ax=axes[0], color="skyblue", bins=bins)
-        axes[0].set_title("Log of Num_votes")
-
-        sns.histplot(self.dataframe["log_Movie_runtime"], kde=True, ax=axes[1], color="skyblue", bins=bins)
-        axes[1].set_title("Log of Movie_runtime")
-
-        sns.histplot(self.dataframe["log_Female_actors"], kde=True, ax=axes[2], color="skyblue", bins=bins)
-        axes[2].set_title("Log of Female_actors")
-
-        sns.histplot(self.dataframe["log_Male_actors"], kde=True, ax=axes[3], color="skyblue", bins=bins)
-        axes[3].set_title("Log of Male_actors")
-
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.show()
     
-    def plot_histograms_combined(self, variables, title, bins=15, layout=(1, None)):
+    def plot_histograms(self, variables, title, bins=15, layout=(1, None)):
         """
         Plot histograms for the specified variables (dependent or independent).
 
@@ -228,7 +105,7 @@ class EDA:
         for i, col in enumerate(variables):
             if col not in self.dataframe.columns:
                 raise ValueError(f"Column '{col}' is not in the DataFrame.")
-            sns.histplot(self.dataframe, x=col, kde=True, stat="density", ax=axes[i], bins=bins)
+            sns.histplot(self.dataframe, x=col, kde=True, stat="count", ax=axes[i], bins=bins)
             axes[i].set_title(f"Histogram of {col}")
             axes[i].set_xlabel(col)
             axes[i].set_ylabel("Frequency")
@@ -261,7 +138,7 @@ class EDA:
             sns.boxplot(data=self.dataframe, x=col)
             plt.title(f"Boxplot of {col}")
 
-        plt.suptitle("Figure 4: Boxplot of Variables")
+        plt.suptitle("Figure 5: Boxplot of Variables")
         plt.tight_layout()
         plt.show()
         
@@ -297,6 +174,10 @@ class EDA:
             .explode()  # Expand the lists into separate rows with one genre per row
             .str.strip()  # Strip leading and trailing whitespace from each genre
             .str.lower()
+        )
+
+        genres_series = genres_series.apply(
+            lambda x: "action/adventure" if x in ["action", "adventure"] else x
         )
 
         # Get the count of each genre
@@ -371,21 +252,30 @@ class EDA:
         Returns:
             None
         """
+        threshold = 50
         if popular_genres is None:
             raise ValueError("`popular_genres` is required.")
 
         # Ensure popular_genres are lowercase
         popular_genres = set(map(str.lower, popular_genres))
-        
-        # Replacing "action" if present, with the more general "action/adventure"
-        popular_genres = ["action/adventure" if x == "action" else x for x in popular_genres]
 
         # Apply function to extract the main genre
         self.dataframe["Main_genre"] = (
             self.dataframe[column_name]
-            .str.replace("action", "action/adventure") # Grouping action and adventure movies into action/adventure
-            .str.replace("adventure", "action/adventure")
             .apply(lambda x: self.get_first_genre(x, popular_genres))
+            .str.replace(" ", "_")
+        )
+
+        popular_genres_counts = self.dataframe["Main_genre"].value_counts()
+
+        # Filter out genres with counts < threshold
+        filtered_popular_counts = popular_genres_counts[popular_genres_counts >= threshold]
+
+        filtered_popular = filtered_popular_counts.index.tolist()
+
+        self.dataframe["Main_genre"] = (
+            self.dataframe[column_name]
+            .apply(lambda x: self.get_first_genre(x, filtered_popular))
             .str.replace(" ", "_")
         )
 

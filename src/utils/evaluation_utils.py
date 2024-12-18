@@ -14,17 +14,15 @@ def scale_features(df):
     # Scale the ratings between 0 and 1
     df["Normalized_Rating"] = df["Average_ratings"].astype(float) / 10
 
-    # Calculate the Log of ROI to obtain normalized data distribution
-    df["Log_ROI"] = df["ROI"].apply(math.log1p)
-
-    # Scale the logged ROI between 0 and 1
-    df["Log_ROI"] = MinMaxScaler().fit_transform(df[["Log_ROI"]])
-
     return df
 
 def calculate_weighted_success(df, roi_weight):
-    df["Movie_success"] = df["Log_ROI"] * roi_weight + df["Normalized_Rating"] * (1 - roi_weight)
-    df["Movie_success"] = MinMaxScaler().fit_transform(df[["Movie_success"]])
+    # Initialize scaler
+    scaler = MinMaxScaler()
+
+    df["log_ROI_scaled"] = scaler.fit_transform(df[["log_ROI"]])
+    df["Movie_success"] = df["log_ROI_scaled"] * roi_weight + df["Normalized_Rating"] * (1 - roi_weight)
+    df["Movie_success"] = scaler.fit_transform(df[["Movie_success"]])
 
     return df
 
