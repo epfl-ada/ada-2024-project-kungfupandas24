@@ -4,6 +4,8 @@ import seaborn as sns
 import regex as re
 import numpy as np
 import ast
+import plotly.express as px
+import plotly.graph_objects as go
 
 class EDA:
     def __init__(self, dataframe, numeric_columns=[
@@ -601,4 +603,173 @@ class EDA:
         # Afficher un message
         print(f"After removing rows without Box Office revenue, {remaining_count} movies remain out of {initial_count}.")
 
+    def frequency_actors_gender(self):
+        bins = np.histogram_bin_edges(
+        np.concatenate((self.dataframe["Female_actors"], self.dataframe["Male_actors"])),
+        bins=70
+        )
+        female_hist, _ = np.histogram(self.dataframe["Female_actors"], bins=bins)
+        male_hist, _ = np.histogram(self.dataframe["Male_actors"], bins=bins)
+
+        # Use bin centers for alignment
+        bin_centers = 0.5 * (bins[:-1] + bins[1:])
+        bar_width = (bins[1] - bins[0]) / 3  # Adjust width to fit side by side
+
+        fig = go.Figure()
+
+        # Add Female actors bar chart
+        fig.add_trace(go.Bar(
+            x=bin_centers - bar_width,  # Shift to the left
+            y=female_hist,
+            name="Female Actors",
+            marker=dict(color='magenta'),
+            width=bar_width  # Set bar width
+        ))
+
+        # Add Male actors bar chart
+        fig.add_trace(go.Bar(
+            x=bin_centers + bar_width,  # Shift to the right
+            y=male_hist,
+            name="Male Actors",
+            marker=dict(color='blue'),
+            width=bar_width 
+        ))
+
+        fig.update_layout(
+            title="Histogram of Female and Male Actors",
+            xaxis_title="Log of Number of Actors",
+            yaxis_title="Frequency",
+            barmode="group",  
+            template="plotly_white",
+            legend_title="Actor Gender"
+        )
+
+        fig.show()
+ 
+    
+    def plot_female_percentage(self, columns=["Movie_release_date"], plot_type = "Line"):
+        """
+        Plot the average female actor percentage per column of choice using Plotly.
+        
+        Args:
+            column (str): The column name to group by (default is "Movie_release_date").
+            plot_type (str): The type of plot ("line" or "bar"). Default is "line".
+
+        Returns:
+            None
+        """
+        # Group data by release date and calculate mean female actor percentage
+        female_percentage_df = (
+            self.dataframe
+            .groupby(columns)["Female_actor_percentage"]
+            .mean()
+            .reset_index()
+        )
+        
+        if len(columns) == 1:
+            columns = columns[0]
+            
+            if plot_type == "Line":
+                # Create a line plot
+                fig = px.line(
+                    female_percentage_df,
+                    x=columns,
+                    y="Female_actor_percentage",
+                    title="Average Female Actor Percentage Per Year",
+                    labels={columns: columns.replace("_", " "), 'Female_actor_percentage': 'Average Female Actor Percentage (%)'}
+                )
+
+                # Update the trace color and layout
+                fig.update_traces(line_color="orange")  
+                fig.update_layout(
+                    xaxis=dict(range=[1980, female_percentage_df["Movie_release_date"].max()]),
+                    template="plotly_white"
+                )
+
+                fig.show()
+            
+            elif plot_type == "Bar":
+                # Sort values by percentage (optional, for better display)
+                #female_percentage_df = female_percentage_df.sort_values(by='Female_actor_percentage')
+
+                # Plot using Plotly Express
+                fig = px.bar(
+                    female_percentage_df,
+                    x=columns,
+                    y='Female_actor_percentage',
+                    title='Average Female Actor Percentage by Movie Genre',
+                    labels={columns: columns.replace("_", " "), 'Female_actor_percentage': 'Average Female Actor Percentage (%)'}
+                )
+
+                fig.show()
+            else:
+                # Handle incorrect plot type
+                raise ValueError("Invalid plot_type. If columns lenght is 1, Expected 'Line', 'Bar'.")
+        else:
+            if plot_type == "Interactif by genre":
+                # Group data by release date and genre
+                female_percentage_per_year_genre_df = (
+                    self.dataframe
+                    .groupby(columns)["Female_actor_percentage"]
+                    .mean()
+                    .reset_index()  # This will retain 'Movie_main_genre' in the DataFrame
+                )
+
+                # Get the unique genres
+                unique_genres = female_percentage_per_year_genre_df["Movie_main_genre"].unique()
+
+                fig = go.Figure()
+
+                # Add a trace for each genre
+                for genre in unique_genres:
+                    genre_data = female_percentage_per_year_genre_df[female_percentage_per_year_genre_df["Movie_main_genre"] == genre]
+                    fig.add_trace(
+                        go.Bar(
+                            x=genre_data["Movie_release_date"],
+                            y=genre_data["Female_actor_percentage"],
+                            name=genre,
+                            visible=False  # Initially make all traces invisible
+                        )
+                    )
+
+                # Make the first genre visible by default
+                fig.data[0].visible = True
+
+                # Add dropdown menu for selecting genres
+                dropdown_buttons = [
+                    dict(
+                        label=genre,
+                        method="update",
+                        args=[
+                            {"visible": [i == idx for i in range(len(unique_genres))]},  # Update visibility
+                            {"title": f"Average Female Actor Percentage Per Year ({genre})"},  
+                        ],
+                    )
+                    for idx, genre in enumerate(unique_genres)
+                ]
+
+                # Update layout with dropdown menu
+                fig.update_layout(
+                    updatemenus=[
+                        dict(
+                            active=0,  # Default genre
+                            buttons=dropdown_buttons,
+                            direction="down",
+                            showactive=True,
+                            x=0.1,
+                            xanchor="left",
+                            y=1.15,
+                            yanchor="top",
+                        )
+                    ],
+                    title="Average Female Actor Percentage Per Year by Genre",
+                    xaxis_title="Movie Release Date",
+                    yaxis_title="Average Female Percentage (%)",
+                    bargap=0,
+                )
+
+                fig.show()
+            else:
+                # Handle incorrect plot type
+                raise ValueError("Invalid plot_type. If columns lenght greater than 1, Expected 'Interactif by genre'.")
 
