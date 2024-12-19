@@ -7,6 +7,8 @@ Are women truly being represented in an equal way to men in movies? What is the 
 
 Who runs the world? Money. Hence, to answer the questions above, we will look at the impact of gender representation on ROI (Return On Investment) and on our own new "Success" metric. Putting into evidence whether or not a secret formula has been discovered by directors to gain success through gender representation.
 
+Find the answers to all these questions and more on our [project website](https://edouard-6.github.io)
+
 ## Research questions:
 1. How can we measure success? Success is often defined by ratings for cinephiles and return on investment (ROI) for investors. Both parties are just as crucial to the true success of a movie with the former being the source of acclaim and the latter the source of funds for production. Why not combine both? Our new WS (Weighted Success) metric attempts to encapsulate the importance of both factors.
 2. What are the factors that affect success through each of its definitions? How does it vary from one country to the next? From one production studio to the next? Or even according to the prominent actor genders? Is there a formula for success?
