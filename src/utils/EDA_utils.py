@@ -642,7 +642,7 @@ class EDA:
 
         fig.update_layout(
             title="Histogram of Female and Male Actors",
-            xaxis_title="Log of Number of Actors",
+            xaxis_title="Number of Actors",
             yaxis_title="Frequency",
             barmode="group",  
             template="plotly_white",
