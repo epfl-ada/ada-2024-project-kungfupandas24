@@ -8,8 +8,11 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 def calculate_vif(X):
     print("------------------------------------------------------------------------------------------------")
+    # Initialize a dataframe to store VIF results
     vif_data = pd.DataFrame()
     vif_data["Feature"] = X.columns
+    
+    # Calculating the VIF for the independent variables
     vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
     
     if all(vif_data["VIF"] < 5):
@@ -27,35 +30,42 @@ def prepare_data(df, indep_vars, dep_var):
     X = df[indep_vars]
     y = df[dep_var]
     
+    # Setting random state for reproducibility
     random_state = 42
+    # Splitting the dataset into train/test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
     
+    # Initializing the scaler
     scaler = StandardScaler()
+    
+    # Scaling and adding constant
     X_scaled = scaler.fit_transform(X_train)
     X_scaled = pd.DataFrame(X_scaled, columns=indep_vars, index=X_train.index)
     X_scaled_wconst = sm.add_constant(X_scaled)
-    y = y_train
     
-    return X_scaled_wconst, y, X_test, y_test, scaler
+    return X_scaled_wconst, y_train, X_test, y_test, scaler
 
 def run_ols_regression(X, y):
+    # Training the model
     model = sm.OLS(y, X).fit()
+    
+    # Printing the OLS summary
     print(model.summary())
+    
     return model
 
-def run_regression_for_genre(X_sclaed_wconst_train, y_train):
-    
-    model = run_ols_regression(X_scaled_wconst_train, y_train)
-    
-    return model
 
 def compute_rmse(X_test, y_test, scaler, model, df, dep_var):
+    # Scaling the test independent variables using the same scaler as the training set
     X_test_scaled = scaler.fit_transform(X_test)
 
+    # Adding the constant
     X_test_scaled_wconst = sm.add_constant(X_test_scaled)
     
+    # Making predictions on the test set
     y_pred = model.predict(X_test_scaled_wconst)
     
+    # Computing the root mean squared error
     rmse = root_mean_squared_error(y_test, y_pred)
     
     print(f"\n------------------------------------------------------------------------------------------------")
