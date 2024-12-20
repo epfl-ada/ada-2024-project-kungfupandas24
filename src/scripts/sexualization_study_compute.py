@@ -117,5 +117,3 @@ def process_and_cluster_movies(df):
     final_data = pd.concat(results)
 
     return final_data, genre_cluster_details
-
-
