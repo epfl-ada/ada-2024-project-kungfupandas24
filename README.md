@@ -52,7 +52,7 @@ Find the answers to all these questions and more on our [project website](https:
 ## Methods:
 1. Definition of a new metric: The WS (Weighted Success) metric is introduced in [Section 2](results.ipynb#2-our-success-metric) of our analysis. Through financial data we calculate the Return on Investment of each movie. We combine ROI with the ratings obtained from the IMDB dataset.
 2. Regression Analysis: We run a regression analysis on both the box office movies ([Section 3](results.ipynb#3-gender-and-age-vs-success)) and movies from streaming platforms ([Section 4](results.ipynb#4-how-does-it-compare-to-streaming-platforms)). The goal is to study the impact of features such as actor gender count, adult rating, movie genre and more on the success of a movie. A different regression model is run using ROI, ratings and Weighted Success to study the varying impact on each metric. We also run it on the Bechdel dataset in Section 5
-3. Natural Language Processing (NLP): We analyze plot summaries and reviews for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles). We apply zero-shot classification and clustering based on embeddings and TF-IDF matrices of the plot summaries.
+3. Natural Language Processing (NLP): We analyze plot summaries for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles). We apply zero-shot classification and clustering based on embeddings and TF-IDF matrices of the plot summaries.
    
 
 ## Proposed timeline:
