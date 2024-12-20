@@ -13,7 +13,7 @@ Find the answers to all these questions and more on our [project website](https:
 1. How can we measure success? Success is often defined by ratings for cinephiles and return on investment (ROI) for investors. Both parties are just as crucial to the true success of a movie with the former being the source of acclaim and the latter the source of funds for production. Why not combine both? Our new WS (Weighted Success) metric attempts to encapsulate the importance of both factors.
 2. What are the factors that affect success through each of its definitions? How does it vary from one country to the next? From one production studio to the next? Or even according to the prominent actor genders? Is there a formula for success?
 3. How does it compare to movies made for streaming platforms? These movies have less trouble bringing in viewers thanks to their easy and cheap access online. Hence, do they follow a different formula? Have box office movies adapted since the rise of streaming?
-4. What are the social reasons behind the presence of female characters in movies? It is common to watch a movie and realize that the female support character may only be present to attract the male gaze. To what extent do production studios abuse of this? The [Bechdel Test](https://www.merriam-webster.com/dictionary/Bechdel%20Test) is a known metric to measure this. However, it is commonly criticised for being too surface level. Is there a better way to measure sexualization in movies?
+4. What are the social reasons behind the presence of female characters in movies? It is common to watch a movie and realize that the female support character may only be present to attract the male gaze. To what extent do production studios abuse of this? The [Bechdel Test](https://www.merriam-webster.com/dictionary/Bechdel%20Test) is a known metric to measure this. However, it is commonly criticised for being too surface level. Is there a better way to measure sexualization in movies? Can we do that using dialogues from movies? What about plot summaries?
 
 ## Additional datasets:
 <table style="border: 1px solid; border-collapse: collapse; width: 100%;">
@@ -37,13 +37,23 @@ Find the answers to all these questions and more on our [project website](https:
     <td style="border: 1px solid; padding: 8px;"><a href="https://www.kaggle.com/datasets/utkarshx27/movies-dataset/data">https://www.kaggle.com/datasets/utkarshx27/movies-dataset/data</a></td>
     <td style="border: 1px solid; padding: 8px;">This dataset obtained from Kaggle allows us to complete some more missing budget rows.</td>
   </tr>
+  <tr>
+    <td style="border: 1px solid; padding: 8px;">Polygraph's Film Dialogue Dataset</td>
+    <td style="border: 1px solid; padding: 8px;"><a href="https://github.com/matthewfdaniels/scripts/">https://github.com/matthewfdaniels/scripts/</a></td>
+    <td style="border: 1px solid; padding: 8px;">This dataset allows us to examine movie dialogues to better understand the representation of women in movies.</td>
+  </tr>
+    <tr>
+    <td style="border: 1px solid; padding: 8px;">Bechdel Dataset</td>
+    <td style="border: 1px solid; padding: 8px;"><a href="https://www.kaggle.com/datasets/treelunar/bechdel-test-movies-as-of-feb-28-2023/data">https://www.kaggle.com/datasets/treelunar/bechdel-test-movies-as-of-feb-28-2023/data</a></td>
+    <td style="border: 1px solid; padding: 8px;">This dataset obtained from Kaggle allows us to look at the representation and sexualization of women in movies.</td>
+  </tr>
 </table>
 
 ## Methods:
 1. Definition of a new metric: The WS (Weighted Success) metric is introduced in [Section 2](results.ipynb#2-our-success-metric) of our analysis. Through financial data we calculate the Return on Investment of each movie. We combine ROI with the ratings obtained from the IMDB dataset.
-2. Regression Analysis: We run a regression analysis on both the box office movies ([Section 3](results.ipynb#3-gender-and-age-vs-success)) and movies from streaming platforms ([Section 4](results.ipynb#4-how-does-it-compare-to-streaming-platforms)). The goal is to study the impact of features such as actor gender count, adult rating, movie genre and more on the success of a movie. A different regression model is run using ROI, ratings and Weighted Success to study the varying impact on each metric.
-3. Text Mining and Natural Language Processing (NLP): Analyze plot summaries and reviews for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles).
-   While the text remained in its raw form for ChatGPT Plus, future trials involving models like T5 or BERT will require further preprocessing. This includes tokenization to convert text into subword units compatible with model tokenizers, truncation or padding to adhere to maximum input length constraints, and other normalization steps such as lowercasing or punctuation removal, depending on the model's requirements.
+2. Regression Analysis: We run a regression analysis on both the box office movies ([Section 3](results.ipynb#3-gender-and-age-vs-success)) and movies from streaming platforms ([Section 4](results.ipynb#4-how-does-it-compare-to-streaming-platforms)). The goal is to study the impact of features such as actor gender count, adult rating, movie genre and more on the success of a movie. A different regression model is run using ROI, ratings and Weighted Success to study the varying impact on each metric. We also run it on the Bechdel dataset in Section 5
+3. Natural Language Processing (NLP): We analyze plot summaries and reviews for language indicative of sexualization (e.g., objectifying terms) or agency (e.g., leadership roles). We apply zero-shot classification and clustering based on embeddings and TF-IDF matrices of the plot summaries.
+   
 
 ## Proposed timeline:
 - 29/11: Linear regressions completed and analyzed. Success metric revised and finalized
