@@ -1296,5 +1296,57 @@ class EDA:
             # Display the plot immediately
             fig.show()
 
+    def count_gender_words(self):
+        """
+        Group data by movie and gender, calculate word counts and percentages.
+        """
+        #Group by movie and gender
+        gender_word_count_df = self.dataframe.groupby(["tconst", "Gender"])["Words"].sum().unstack()
+        gender_word_count_df = gender_word_count_df.rename(columns={"f": "Female_word_count", "m": "Male_word_count"})
+        
+        #Calculate total words per movie
+        gender_word_count_df["Total_word_count"] = gender_word_count_df.sum(axis=1)
+        
+        #Reset index and clean up
+        gender_word_count_df = gender_word_count_df.reset_index()
+        gender_word_count_df.columns.name = None
+        
+        #Calculate the percentage of words for each gender
+        gender_word_count_df['Word_percentage_men'] = (
+            (gender_word_count_df['Male_word_count'] / gender_word_count_df['Total_word_count']) * 100
+        )
+        gender_word_count_df['Word_percentage_women'] = (
+            (gender_word_count_df['Female_word_count'] / gender_word_count_df['Total_word_count']) * 100
+        )
+        
+        self.gender_word_count_df = gender_word_count_df
+        return self.gender_word_count_df
 
+    def plotly_gender_words(self):
+        gender_word_count_df = self.dataframe
+        # Prepare data for plotting
+        percentage_df = pd.DataFrame({
+            "Percentage": list(gender_word_count_df['Word_percentage_men']) + list(gender_word_count_df['Word_percentage_women']),
+            "Gender": ["Men"] * len(gender_word_count_df) + ["Women"] * len(gender_word_count_df)
+        })
+        # Create the histogram
+        fig = px.histogram(
+            percentage_df, 
+            x="Percentage", 
+            color="Gender",
+            nbins=50,
+            opacity=0.6,
+            title="Distribution of Word Percentage Spoken by Men and Women in Movies",
+            labels={"Percentage": "Percentage of Words Spoken", "Gender": "Gender"}
+        )
+        # Update layout for a clean look
+        fig.update_layout(
+            yaxis_title="Number of Movies",  
+            barmode='overlay'  # Overlay bars for transparency
+        )
+        fig.show()
+
+    def plotly_(self, variables, bins=15, second_dataframe=None, save_html=False, output_dir="./plots"):
+
+            fig.show()
    
