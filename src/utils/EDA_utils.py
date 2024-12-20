@@ -9,7 +9,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.stats import gaussian_kde
 import os
-
+from wordcloud import WordCloud
+import plotly.subplots as sp
 
 class EDA:
     def __init__(self, dataframe, numeric_columns=[
@@ -1344,8 +1345,55 @@ class EDA:
             yaxis_title="Number of Movies",  
             barmode='overlay'  # Overlay bars for transparency
         )
+        fig.write_html("Gender_Words.html")
         fig.show()
-
+    
+    def plotly_cluster_words(self, genre_cluster_details):
+        def create_wordcloud(words):
+            word_freq = {word: i + 1 for i, word in enumerate(words)}
+            wordcloud = WordCloud(width=800, height=400, background_color="white").generate_from_frequencies(word_freq)
+            return wordcloud
+        
+        wordcloud_images = {}
+        for genre, clusters_data in genre_cluster_details.items():
+            wordcloud_images[genre] = {}
+            for cluster_id, words in clusters_data.items():
+                top_5_words = words[:5]
+                wordcloud_images[genre][cluster_id] = create_wordcloud(top_5_words)
+        
+        rows = len(wordcloud_images)
+        cols = max(len(clusters_data) for clusters_data in wordcloud_images.values())
+        
+        fig = sp.make_subplots(
+            rows=rows, cols=cols,
+            subplot_titles=[f"{genre.title()} Cluster {cluster_id}" 
+                            for genre, clusters in wordcloud_images.items() 
+                            for cluster_id in clusters.keys()],
+            vertical_spacing=0.2,
+        )
+        
+        row = 1
+        for genre, clusters_data in wordcloud_images.items():
+            col = 1
+            for cluster_id, wordcloud in clusters_data.items():
+                img_array = np.array(wordcloud)
+                fig.add_trace(
+                    go.Image(z=img_array),
+                    row=row, col=col
+                )
+                fig.update_xaxes(visible=False, row=row, col=col)
+                fig.update_yaxes(visible=False, row=row, col=col)
+                col += 1
+            row += 1
+        
+        fig.update_layout(
+            showlegend=False,
+            margin=dict(l=10, r=10, t=50, b=10),
+            width=1000, height=800
+        )
+        fig.write_html("Clusters.html")
+        fig.show()
+        
     def plotly_(self, variables, bins=15, second_dataframe=None, save_html=False, output_dir="./plots"):
 
             fig.show()
