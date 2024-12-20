@@ -137,19 +137,6 @@ class ClusteringResultsLoader:
     def __init__(self, results_dir):
         self.results_dir = results_dir
 
-    def load_results(self, labels):
-        path = os.path.join(self.results_dir, "NLP", f"clustering_results.csv")
-        try:
-            return pd.read_csv(path)
-        except FileNotFoundError:
-            print(f"File not found: {path}")
-        except Exception as e:
-            print(f"An error occurred while loading the results: {e}")
-
-class ClusteringResultsLoader:
-    def __init__(self, results_dir):
-        self.results_dir = results_dir
-
     def load_csv(self):
         path = os.path.join(self.results_dir, "NLP", "clustering_results.csv")
         try:
