@@ -6,6 +6,7 @@ import numpy as np
 import ast
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 class EDA:
     def __init__(self, dataframe, numeric_columns=[
@@ -615,6 +616,7 @@ class EDA:
         bin_centers = 0.5 * (bins[:-1] + bins[1:])
         bar_width = (bins[1] - bins[0]) / 3  # Adjust width to fit side by side
 
+
         fig = go.Figure()
 
         # Add Female actors bar chart
@@ -647,13 +649,13 @@ class EDA:
         fig.show()
  
     
-    def plot_female_percentage(self, columns=["Movie_release_date"], plot_type = "Line"):
+    def plot_female_percentage(self, columns=["Movie_release_date"], plot_type="Line"):
         """
         Plot the average female actor percentage per column of choice using Plotly.
-        
+
         Args:
             column (str): The column name to group by (default is "Movie_release_date").
-            plot_type (str): The type of plot ("line" or "bar"). Default is "line".
+            plot_type (str): The type of plot ("line", "bar", or "Interactif by genre"). Default is "line".
 
         Returns:
             None
@@ -665,10 +667,10 @@ class EDA:
             .mean()
             .reset_index()
         )
-        
+
         if len(columns) == 1:
             columns = columns[0]
-            
+
             if plot_type == "Line":
                 # Create a line plot
                 fig = px.line(
@@ -680,18 +682,15 @@ class EDA:
                 )
 
                 # Update the trace color and layout
-                fig.update_traces(line_color="orange")  
+                fig.update_traces(line_color="orange")
                 fig.update_layout(
                     xaxis=dict(range=[1980, female_percentage_df["Movie_release_date"].max()]),
                     template="plotly_white"
                 )
 
                 fig.show()
-            
-            elif plot_type == "Bar":
-                # Sort values by percentage (optional, for better display)
-                #female_percentage_df = female_percentage_df.sort_values(by='Female_actor_percentage')
 
+            elif plot_type == "Bar":
                 # Plot using Plotly Express
                 fig = px.bar(
                     female_percentage_df,
@@ -701,10 +700,15 @@ class EDA:
                     labels={columns: columns.replace("_", " "), 'Female_actor_percentage': 'Average Female Actor Percentage (%)'}
                 )
 
+                # Update bar color
+                fig.update_traces(marker_color="orange")
+                fig.update_layout(template="plotly_white")
+
                 fig.show()
+
             else:
                 # Handle incorrect plot type
-                raise ValueError("Invalid plot_type. If columns lenght is 1, Expected 'Line', 'Bar'.")
+                raise ValueError("Invalid plot_type. If columns length is 1, expected 'Line' or 'Bar'.")
         else:
             if plot_type == "Interactif by genre":
                 # Group data by release date and genre
@@ -728,6 +732,7 @@ class EDA:
                             x=genre_data["Movie_release_date"],
                             y=genre_data["Female_actor_percentage"],
                             name=genre,
+                            marker_color="orange",  # Set bar color to orange
                             visible=False  # Initially make all traces invisible
                         )
                     )
@@ -742,7 +747,7 @@ class EDA:
                         method="update",
                         args=[
                             {"visible": [i == idx for i in range(len(unique_genres))]},  # Update visibility
-                            {"title": f"Average Female Actor Percentage Per Year ({genre})"},  
+                            {"title": f"Average Female Actor Percentage Per Year ({genre})"},
                         ],
                     )
                     for idx, genre in enumerate(unique_genres)
@@ -766,10 +771,197 @@ class EDA:
                     xaxis_title="Movie Release Date",
                     yaxis_title="Average Female Percentage (%)",
                     bargap=0,
+                    template="plotly_white"
                 )
 
                 fig.show()
             else:
                 # Handle incorrect plot type
-                raise ValueError("Invalid plot_type. If columns lenght greater than 1, Expected 'Interactif by genre'.")
+                raise ValueError("Invalid plot_type. If columns length greater than 1, expected 'Interactif by genre'.")
 
+
+
+    def plot_gender_comparison(self, columns=["log_ROI", "Movie_success", "Normalized_Rating"], interactive=False):
+        """
+        Plot the number of Female and Male actors vs the columns of choice as subplots.
+
+        Args:
+            columns (list): List of column names for movie success metrics.
+            interactive (bool): Whether plot is interactive and allows changing between genres.
+
+        Returns:
+            None
+        """
+        if not interactive:
+            fig = make_subplots(rows=len(columns), cols=1, shared_xaxes=True,
+                                subplot_titles=[f"Average {col.replace('_', ' ')} vs. Number of Actors" for col in columns])
+
+            # Create subplots
+            for i, column in enumerate(columns):
+                female_data = self.dataframe.groupby("Female_actors")[column].mean().reset_index()
+                male_data = self.dataframe.groupby("Male_actors")[column].mean().reset_index()
+
+                # Add Female data
+                fig.add_trace(go.Bar(
+                    x=female_data["Female_actors"],
+                    y=female_data[column],
+                    name="Female Actors",
+                    marker=dict(color='rgb(255, 165, 0)'),
+                    showlegend=(i == 0)  # Show legend only once
+                ), row=i+1, col=1)
+
+                fig.add_trace(go.Scatter(
+                    x=female_data["Female_actors"],
+                    y=female_data[column],
+                    mode='lines',
+                    name=f"Female Peaks",
+                    line=dict(color='rgb(255, 140, 0)', width=2, dash='dash'),  # Pink dashed line
+                    marker=dict(size=6, symbol='circle'),
+                    showlegend=False
+                ), row=i+1, col=1)
+
+                # Add Male data
+                fig.add_trace(go.Bar(
+                    x=male_data["Male_actors"],
+                    y=male_data[column],
+                    marker=dict(color='rgb(139, 69, 19)'),
+                    name="Male Actors",
+                    showlegend=(i == 0)  
+                ), row=i+1, col=1)
+
+                fig.add_trace(go.Scatter(
+                    x=male_data["Male_actors"],
+                    y=male_data[column],
+                    mode='lines',
+                    name=f"Male Peaks",
+                    line=dict(color='rgb(160, 82, 45)', width=2, dash='dot'),  # Blue dotted line
+                    marker=dict(size=6, symbol='circle'),
+                    showlegend=False
+                ), row=i+1, col=1)
+
+            fig.update_layout(
+                height=300 * len(columns),
+                title_text="Gender Comparison Across Metrics",
+                xaxis_title="Number of Actors",
+                template="plotly_white"
+            )
+
+
+            # Add Y-axis labels
+            for i, column in enumerate(columns):
+                fig.update_yaxes(title_text=column.replace('_', ' '), row=i+1, col=1)
+
+            # Add X-axis labels and graduations for interactive plot
+            for i in range(len(columns)):
+                fig.update_xaxes(title_text="Average Number of Actors", row=i+1, col=1, showgrid=True, ticks="outside")
+
+
+            fig.show()
+        else:
+            genres = [genre for genre in self.dataframe['Movie_main_genre'].unique() if not pd.isna(genre)]
+
+            # Create subplots
+            fig = make_subplots(
+                rows=len(columns),
+                cols=1,
+                shared_xaxes=True,
+                subplot_titles=[f"Average {col.replace('_', ' ')} vs. Number of Actors" for col in columns]
+            )
+
+            traces_per_genre = len(columns) * 4  # Each genre has two traces per column (Female and Male)
+
+            buttons = []  # To hold the genre selection buttons
+
+            for genre_index, genre in enumerate(genres):
+                # Create visibility list for all traces
+                visibility = [False] * (traces_per_genre * len(genres))
+
+                for i, column in enumerate(columns):
+                    # Filter data by genre
+                    genre_data = self.dataframe[self.dataframe['Movie_main_genre'] == genre]
+
+                    female_data = genre_data.groupby("Female_actors")[column].mean().reset_index()
+                    male_data = genre_data.groupby("Male_actors")[column].mean().reset_index()
+
+                    # Add Female data as a bar plot
+                    fig.add_trace(go.Bar(
+                        x=female_data["Female_actors"],
+                        y=female_data[column],
+                        name=f"Female Actors ({genre})",
+                        marker=dict(color='rgb(255, 165, 0)'),  # Light pastel pink
+                        visible=(genre_index == 0),  # Initially visible for the first genre
+                        showlegend=(i == 0)  # Show legend only for the first column
+                    ), row=i+1, col=1)
+
+                    # Add a line following the peaks of Female data
+                    fig.add_trace(go.Scatter(
+                        x=female_data["Female_actors"],
+                        y=female_data[column],
+                        mode='lines',
+                        name=f"Female Peaks ({genre})",
+                        line=dict(color='rgb(255, 140, 0)', width=2, dash='dash'),  # Pink dashed line
+                        marker=dict(size=6, symbol='circle'),
+                        visible=(genre_index == 0),
+                        showlegend=False
+                    ), row=i+1, col=1)
+
+                    # Add Male data as a bar plot
+                    fig.add_trace(go.Bar(
+                        x=male_data["Male_actors"],
+                        y=male_data[column],
+                        name=f"Male Actors ({genre})",
+                        marker=dict(color='rgb(139, 69, 19)'),  # Light pastel blue
+                        visible=(genre_index == 0),  # Initially visible for the first genre
+                        showlegend=(i == 0)  # Show legend only for the first column
+                    ), row=i+1, col=1)
+
+                    # Add a line following the peaks of Male data
+                    fig.add_trace(go.Scatter(
+                        x=male_data["Male_actors"],
+                        y=male_data[column],
+                        mode='lines',
+                        name=f"Male Peaks ({genre})",
+                        line=dict(color='rgb(160, 82, 45)', width=2, dash='dot'),  # Blue dotted line
+                        marker=dict(size=6, symbol='circle'),
+                        visible=(genre_index == 0),
+                        showlegend=False
+                    ), row=i+1, col=1)
+
+
+
+                # Update visibility list for the current genre
+                visibility[genre_index * traces_per_genre:(genre_index + 1) * traces_per_genre] = [True] * traces_per_genre
+
+                # Add button for this genre
+                buttons.append(dict(
+                    label=genre,
+                    method="update",
+                    args=[{"visible": visibility},  # Update visibility of traces
+                        {"title": f"Gender Comparison for Genre: {genre}"}]
+                ))
+
+            fig.update_layout(
+                updatemenus=[dict(
+                    active=0,
+                    buttons=buttons,
+                    direction="down",
+                    x=0.9,
+                    xanchor="left",
+                    y=1.1,
+                    showactive=True
+                )],
+                height=300 * len(columns),
+                title_text=f"Gender Comparison Across Metrics",
+                xaxis_title="Number of Actors",
+                template="plotly_white"
+            )
+
+            # Add Y-axis labels
+            for i, column in enumerate(columns):
+                fig.update_yaxes(title_text=column.replace('_', ' '), row=i+1, col=1)
+
+            # Add X-axis labels and graduations for interactive plot
+            for i in range(len(columns)):
+                fig.update_xaxes(title_text="Average Number of Actors", row=i+1, col=1, showgrid=True, ticks="outside")
+
+            fig.show()
