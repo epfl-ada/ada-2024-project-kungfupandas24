@@ -682,14 +682,30 @@ class EDA:
                     title="Average Female Actor Percentage Per Year",
                     labels={columns: columns.replace("_", " "), 'Female_actor_percentage': 'Average Female Actor Percentage (%)'}
                 )
+                
+                # Add a polynomial fit of degree 2
+                x = female_percentage_df[columns]
+                y = female_percentage_df["Female_actor_percentage"]
+                polynomial = np.poly1d(np.polyfit(x, y, 2))
+                y_fit = polynomial(x)
 
+                # Add polynomial fit to the plot
+                fig.add_scatter(
+                    x=x,
+                    y=y_fit,
+                    mode="lines",
+                    name="Polynomial trend",
+                    line=dict(color="blue", dash="dash")
+                )
+                
                 # Update the trace color and layout
                 fig.update_traces(line_color="orange")
                 fig.update_layout(
                     xaxis=dict(range=[1980, female_percentage_df["Movie_release_date"].max()]),
-                    template="plotly_white"
+                    template="plotly_white",
+                    showlegend=False
                 )
-
+                fig.write_html("HTML_TIME_SERIES.html")
                 fig.show()
 
             elif plot_type == "Bar":

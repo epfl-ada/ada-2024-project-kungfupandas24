@@ -1,3 +1,4 @@
 data/
 *.DS_store
 __pycache__/
+HTML_TIME_SERIES.html
