@@ -65,5 +65,5 @@ Find the answers to all these questions and more on our [project website](https:
 - Sections 2 and 3 (Success metric and Gender/Age impact): Edouard, Serge and Leila
 - Section 4 (Comparison with streaming services): Yoan and Serge
 - Section 5 (Sexualization study): Fawzia, Leila and Edouard
-- Data story: Fawzia and others (TBD)
+- Data story: Everyone
 - Final touches: Everyone
