@@ -1393,6 +1393,66 @@ class EDA:
         )
         fig.write_html("Clusters.html")
         fig.show()
+
+    def plot_comparison_percentage_female(self, second_dataframe, year_column_primary, year_column_secondary, title):
+        """
+        Generate a graph showing the average percentage of female actors by year.
+        :param second_dataframe: Second DataFrame for comparison (e.g., box_office_df)
+        :param year_column_primary: Year column name in the primary DataFrame
+        :param year_column_secondary: Year column name in the second DataFrame
+        :param title: Title for the graph
+        """
+        # Filter and prepare data for the firts DataFrame
+        df_primary = self.dataframe[[year_column_primary, "Male_actors", "Female_actors"]].copy()
+        df_primary[year_column_primary] = pd.to_numeric(df_primary[year_column_primary], errors="coerce")
+        df_primary = df_primary.dropna(subset=[year_column_primary, "Male_actors", "Female_actors"])
+        df_primary["Total_actors"] = df_primary["Male_actors"] + df_primary["Female_actors"]
+        df_primary["Percentage_female"] = (df_primary["Female_actors"] / df_primary["Total_actors"]) * 100
+        df_primary = df_primary[df_primary[year_column_primary] > 1970]
+        df_primary_yearly = df_primary.groupby(year_column_primary, as_index=False).agg({
+            "Female_actors": "mean","Percentage_female": "mean"})
+
+        # Filter and prepare data for the second DataFrame
+        df_secondary = second_dataframe[[year_column_secondary, "Male_actors", "Female_actors"]].copy()
+        df_secondary[year_column_secondary] = pd.to_numeric(df_secondary[year_column_secondary], errors="coerce")
+        df_secondary = df_secondary.dropna(subset=[year_column_secondary, "Male_actors", "Female_actors"])
+        df_secondary["Total_actors"] = df_secondary["Male_actors"] + df_secondary["Female_actors"]
+        df_secondary["Percentage_female"] = (df_secondary["Female_actors"] / df_secondary["Total_actors"]) * 100
+        
+        #We want to keep movies after 1970
+        df_secondary = df_secondary[df_secondary[year_column_secondary] > 1970]
+        df_secondary_yearly = df_secondary.groupby(year_column_secondary, as_index=False).agg({
+            "Female_actors": "mean","Percentage_female": "mean"})
+
+        # Create the graph
+        fig = go.Figure()
+
+        # Plot streaming platforms
+        fig.add_trace(go.Bar(
+            x=df_primary_yearly[year_column_primary],
+            y=df_primary_yearly["Percentage_female"],
+            name="Streaming Platforms",
+            marker=dict(color="royalblue")
+        ))
+
+        # Plot box office movies
+        fig.add_trace(go.Bar(
+            x=df_secondary_yearly[year_column_secondary],
+            y=df_secondary_yearly["Percentage_female"],
+            name="Box Office Movies",
+            marker=dict(color="lightcoral")))
+
+
+
+        fig.update_layout(
+            title=title,
+            xaxis_title="Year",
+            yaxis_title="Average Percentage of Female Actors (%)",
+            barmode="group",
+            template="plotly_white")
+
+        # Display the graph
+        fig.show()
         
     def plotly_(self, variables, bins=15, second_dataframe=None, save_html=False, output_dir="./plots"):
 
