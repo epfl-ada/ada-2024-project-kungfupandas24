@@ -7,6 +7,7 @@ import ast
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from scipy.stats import gaussian_kde
 
 class EDA:
     def __init__(self, dataframe, numeric_columns=[
@@ -607,7 +608,7 @@ class EDA:
     def frequency_actors_gender(self):
         bins = np.histogram_bin_edges(
         np.concatenate((self.dataframe["Female_actors"], self.dataframe["Male_actors"])),
-        bins=70
+        bins=40
         )
         female_hist, _ = np.histogram(self.dataframe["Female_actors"], bins=bins)
         male_hist, _ = np.histogram(self.dataframe["Male_actors"], bins=bins)
@@ -624,7 +625,7 @@ class EDA:
             x=bin_centers - bar_width,  # Shift to the left
             y=female_hist,
             name="Female Actors",
-            marker=dict(color='magenta'),
+            marker=dict(color='rgb(255, 165, 0)'),
             width=bar_width  # Set bar width
         ))
 
@@ -633,7 +634,7 @@ class EDA:
             x=bin_centers + bar_width,  # Shift to the right
             y=male_hist,
             name="Male Actors",
-            marker=dict(color='blue'),
+            marker=dict(color='rgb(139, 69, 19)'),
             width=bar_width 
         ))
 
@@ -647,6 +648,7 @@ class EDA:
         )
 
         fig.show()
+        #fig.write_html("Frequency_Gender.html")
  
     
     def plot_female_percentage(self, columns=["Movie_release_date"], plot_type="Line"):
@@ -705,7 +707,7 @@ class EDA:
                 fig.update_layout(template="plotly_white")
 
                 fig.show()
-
+                #fig.write_html("Per_Year.html")
             else:
                 # Handle incorrect plot type
                 raise ValueError("Invalid plot_type. If columns length is 1, expected 'Line' or 'Bar'.")
@@ -775,6 +777,7 @@ class EDA:
                 )
 
                 fig.show()
+                #fig.write_html("By_Genre_Per_Year.html")
             else:
                 # Handle incorrect plot type
                 raise ValueError("Invalid plot_type. If columns length greater than 1, expected 'Interactif by genre'.")
@@ -857,6 +860,7 @@ class EDA:
 
 
             fig.show()
+            #fig.write_html("Gender_across_Metrics.html")
         else:
             genres = [genre for genre in self.dataframe['Movie_main_genre'].unique() if not pd.isna(genre)]
 
@@ -965,3 +969,4 @@ class EDA:
                 fig.update_xaxes(title_text="Average Number of Actors", row=i+1, col=1, showgrid=True, ticks="outside")
 
             fig.show()
+            #fig.write_html("By_genre_Gender_across_Metrics.html")
