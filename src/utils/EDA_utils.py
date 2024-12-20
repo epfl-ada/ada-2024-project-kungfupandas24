@@ -642,7 +642,7 @@ class EDA:
 
         fig.update_layout(
             title="Histogram of Female and Male Actors",
-            xaxis_title="Log of Number of Actors",
+            xaxis_title="Number of Actors",
             yaxis_title="Frequency",
             barmode="group",  
             template="plotly_white",
@@ -803,7 +803,6 @@ class EDA:
 
 
     def plot_gender_comparison(self, columns=["log_ROI", "Normalized_Rating"], interactive=False):
-        
         """
         Plot the number of Female and Male actors vs the columns of choice as subplots.
 
