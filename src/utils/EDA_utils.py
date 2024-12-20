@@ -708,7 +708,7 @@ class EDA:
                     template="plotly_white",
                     showlegend=False
                 )
-                fig.write_html("HTML_TIME_SERIES.html")
+                # fig.write_html("HTML_TIME_SERIES.html")
                 fig.show()
 
             elif plot_type == "Bar":
@@ -801,7 +801,150 @@ class EDA:
                 # Handle incorrect plot type
                 raise ValueError("Invalid plot_type. If columns length greater than 1, expected 'Interactif by genre'.")
 
+    def plot_average_log_roi_genres(self):            
+        genres = ['Main_genre_comedy', 'Main_genre_drama', 
+            'Main_genre_fantasy', 'Main_genre_horror', 'Main_genre_thriller']
+        
+        # Compute average ROI for each genre
+        average_roi = {}
+        for genre in genres:
+            average_roi[genre.replace('Main_genre_', '')] = self.dataframe[self.dataframe[genre] == 1]['log_ROI'].mean()
 
+        average_roi_per_genre = pd.DataFrame(list(average_roi.items()), columns=['Genre', 'log_ROI'])
+
+        # Create chart
+        fig = px.bar(average_roi_per_genre, x='Genre', y='log_ROI', title='Average log ROI Across different movie genres',
+                    labels={'log_ROI': 'Average log ROI', 'Genre': 'Movie Genre'},
+                    color='log_ROI', color_continuous_scale=px.colors.sequential.Hot)
+
+        fig.update_layout(coloraxis_showscale=False)
+
+        # Show plot
+        fig.show()
+
+        # Save as HTML file
+        # fig.write_html('average_log_roi_genres.html')
+    
+    def plot_roi_trends_high_low_rated(self):
+        # Threshold for high ratings is 6.5 which is the median
+        high_rating_threshold = self.dataframe["Average_ratings"].median()
+
+        # Classify movies
+        self.dataframe["Level_Rating"] = self.dataframe["Average_ratings"].apply(lambda x: "High_rated" if x >= high_rating_threshold else "Low_rated")
+
+        # Group by year and rating level to calculate average ROI
+        df_trends = self.dataframe.groupby(["Movie_release_date", "Level_Rating"])["log_ROI"].mean().reset_index()
+
+        df_trends = df_trends.pivot(index="Movie_release_date", columns="Level_Rating", values="log_ROI").reset_index()
+        df_trends.fillna(0, inplace=True)
+
+        # Create line graph
+        fig = px.line(df_trends, x="Movie_release_date", y=["High_rated", "Low_rated"],
+                    labels={'value': 'log_ROI', 'variable': 'Level_Rating', 'Movie_release_date': 'Year'},
+                    title='Trends in log_ROI for high rated vs. low rated movies')
+
+        fig.update_traces(mode='lines+markers')
+
+        # Show plot
+        fig.show()
+
+        # Save as HTML file
+        # fig.write_html('roi_trends_high_low_rated.html')
+    
+    def plot_ratings_vs_roi_scatter(self):
+        # Create column to detect outliers of ROI and ratings
+        self.dataframe['Outlier_Type'] = 'Normal'
+
+        self.dataframe.loc[(self.dataframe['log_ROI'] > self.dataframe['log_ROI'].quantile(0.75)) & (self.dataframe['Level_Rating'] == "Low_rated"), 'Outlier_Type'] = 'High ROI, Low Ratings'
+        self.dataframe.loc[(self.dataframe['log_ROI'] < self.dataframe['log_ROI'].quantile(0.25)) & (self.dataframe['Level_Rating'] == "High_rated"), 'Outlier_Type'] = 'Low ROI, High Ratings'
+
+        # Create plot
+        fig = px.scatter(self.dataframe, x='Average_ratings', y='log_ROI', color='Outlier_Type',
+                        labels={'Average_ratings': 'Average Ratings', 'log_ROI': 'log ROI'},
+                        title='Relationship between Ratings and log ROI with outliers highlighted',
+                        hover_data=['Primary_title', 'Movie_release_date'])
+
+        # Differentiate outliers
+        fig.update_traces(marker=dict(size=12, line=dict(width=2, color='DarkSlateGrey')),
+                        selector=dict(mode='markers'))
+
+        # Show plot
+        fig.show()
+
+        # Save as HTML file
+        # fig.write_html('ratings_vs_roi_scatter.html')
+    
+    def plot_revenue_ratings_trends_by_genre(self):
+        # Convert Release date to decades
+        self.dataframe['Decade'] = (self.dataframe['Movie_release_date'] // 10) * 10
+
+        average_revenue_by_genre = {}
+        average_ratings_by_genre = {}
+
+        genres = ['Main_genre_comedy', 'Main_genre_drama', 'Main_genre_fantasy', 'Main_genre_horror', 'Main_genre_thriller']
+
+        # Calculate average revenue and ratings for each genre over decades
+        for genre in genres:
+            genre_data = self.dataframe[self.dataframe[genre] == 1]
+            grouped_data = genre_data.groupby('Decade').agg({
+                'log_ROI': 'mean',
+                'Average_ratings': 'mean'
+            }).reset_index()
+            average_revenue_by_genre[genre.replace('Main_genre_', '')] = grouped_data.set_index('Decade')['log_ROI']
+            average_ratings_by_genre[genre.replace('Main_genre_', '')] = grouped_data.set_index('Decade')['Average_ratings']
+
+        df_revenue = pd.DataFrame(average_revenue_by_genre)
+        df_ratings = pd.DataFrame(average_ratings_by_genre)
+
+        # Create revenue trends plot
+        fig_revenue = px.line(df_revenue, title='Movie log ROI decade trends by genre',
+                            labels={'value': 'log ROI', 'variable': 'Genre'},
+                            markers=True)
+        fig_revenue.update_layout(yaxis_title='Average log ROI')
+        fig_revenue.show()
+        fig_revenue.write_html('revenue_trends_by_genre.html')
+
+        # Create ratings trends plot
+        fig_ratings = px.line(df_ratings, title='Movie ratings decade trends by genre',
+                            labels={'value': 'Average ratings', 'variable': 'Genre'},
+                            markers=True)
+        fig_ratings.update_layout(yaxis_title='Average Ratings')
+        fig_ratings.show()
+        # fig_ratings.write_html('ratings_trends_by_genre.html')
+    
+    def plot_movie_success_by_decade_genre_line(self):
+        genres = ['Main_genre_comedy', 'Main_genre_drama', 
+                'Main_genre_fantasy', 'Main_genre_horror', 'Main_genre_thriller']
+
+        list = []
+
+        for genre in genres:
+            # Filter data for each genre
+            genre_data = self.dataframe[self.dataframe[genre] == 1]
+            
+            # Group by decade and calculate mean movie success
+            decade_success = genre_data.groupby('Decade')['Movie_success'].mean().reset_index()
+            decade_success['Genre'] = genre.replace('Main_genre_', '').capitalize()
+            
+            list.append(decade_success)
+
+        # Concatenate all dfs
+        genre_decade_success = pd.concat(list, ignore_index=True)
+
+        # Create line plot
+        fig = px.line(genre_decade_success, x='Decade', y='Movie_success', color='Genre',
+                    title='Decade movie success by genre',
+                    labels={'Movie_success': 'Average Movie Success', 'Decade': 'Decade', 'Genre': 'Genre'},
+                    markers=True)
+
+        fig.update_layout(xaxis_title='Decade',
+                        yaxis_title='Average Movie Success',
+                        legend_title='Genre')
+
+        fig.show()
+
+        # Save as HTML file
+        # fig.write_html('movie_success_by_decade_genre_line.html')
 
     def plot_gender_comparison(self, columns=["log_ROI", "Normalized_Rating"], interactive=False):
         """
