@@ -8,6 +8,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy.stats import gaussian_kde
+import os
+
 
 class EDA:
     def __init__(self, dataframe, numeric_columns=[
@@ -986,3 +988,313 @@ class EDA:
 
             fig.show()
             #fig.write_html("By_genre_Gender_across_Metrics.html")
+
+
+    def analyze_female_actors_by_genre(self):
+        """
+        Analyze and visualize the average number and percentage of female actors by genre.
+        """
+        # Filter the data
+        df_filtered = self.dataframe[['Movie_release_date', 'Male_actors', 'Female_actors', 'Movie_genres']].copy()
+        df_filtered['Movie_release_date'] = pd.to_numeric(df_filtered['Movie_release_date'], errors='coerce')
+        df_filtered = df_filtered.dropna(subset=['Movie_release_date', 'Male_actors', 'Female_actors', 'Movie_genres'])
+        df_filtered['Total_actors'] = df_filtered['Male_actors'] + df_filtered['Female_actors']
+        df_filtered['Percentage_female'] = (df_filtered['Female_actors'] / df_filtered['Total_actors']) * 100
+
+        # Explode genres
+        df_exploded = df_filtered.assign(Movie_genres=df_filtered['Movie_genres'].str.split(',')).explode('Movie_genres')
+        df_exploded['Movie_genres'] = df_exploded['Movie_genres'].str.strip()
+
+        # Remove Uncategorized genre
+        df_exploded = df_exploded[df_exploded['Movie_genres'].str.lower() != 'uncategorized']
+
+        # Group by genre
+        df_grouped_number = df_exploded.groupby('Movie_genres', as_index=False)['Female_actors'].mean()
+        df_grouped_percentage = df_exploded.groupby('Movie_genres', as_index=False)['Percentage_female'].mean()
+
+        # Create the plot
+        fig = go.Figure()
+
+        # Average number of female actors by genres
+        fig.add_trace(go.Bar(
+            x=df_grouped_number['Movie_genres'],
+            y=df_grouped_number['Female_actors'],
+            name='Average Number of Female Actors',
+            marker=dict(color='royalblue')
+        ))
+
+        #  Average percentage of female actors by genres
+        fig.add_trace(go.Bar(
+            x=df_grouped_percentage['Movie_genres'],
+            y=df_grouped_percentage['Percentage_female'],
+            name='Average Percentage of Female Actors',
+            marker=dict(color='lightcoral'),
+            visible=False
+        ))
+
+        # Add dropdown menu
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    buttons=list([
+                        dict(label="Average Number of Female Actors",
+                             method="update",
+                             args=[{"visible": [True, False]},
+                                   {"yaxis": {"title": "Average Number of Female Actors"}}]),
+                        dict(label="Average Percentage of Female Actors",
+                             method="update",
+                             args=[{"visible": [False, True]},
+                                   {"yaxis": {"title": "Average Percentage of Female Actors (%)"}}])
+                    ]),
+                    direction="down",
+                    showactive=True,
+                    x=0.5,
+                    xanchor="center",
+                    y=1.05,  
+                    yanchor="top"
+                )
+            ]
+        )
+
+        # Update layout
+        fig.update_layout(
+            title={
+                "text": "Average Number or Percentage of Female Actors by Genre",
+                "y": 0.95,
+                "x": 0.5,
+                "xanchor": "center",
+                "yanchor": "top"
+            },
+            xaxis_title="Movie Genre", yaxis_title="Value", template="plotly_white"
+        )
+
+        fig.show()
+        #fig.write_html("average_number_or_percentage_of_female.html")
+
+
+    def analyze_countries_plotly(self, column_name="Movie_countries"):
+        """
+        Analyze and visualize the top 10 represented countries in the dataset.
+
+        Args:
+            column_name (str): The column containing country information.
+        """
+        # Drop rows where the column is empty
+        self.dataframe = self.dataframe.drop(self.dataframe[self.dataframe[column_name] == ""].index)
+
+        # Process the country information
+        country_series = (
+            self.dataframe[column_name]
+            .str.replace(r"[\[\]']", "", regex=True)
+            .str.split(", ")
+            .explode()
+            .str.strip()
+            .str.lower()
+        )
+
+        # Count the occurrences for each country
+        country_count = country_series.value_counts()
+
+        # Top 10 countries
+        top_10_countries = country_count.head(10)
+
+        # Bar chart
+        fig = px.bar(top_10_countries,
+            x=top_10_countries.index,
+            y=top_10_countries.values,
+            labels={"x": "Countries", "y": "Occurrences" },
+            title="Top 10 Countries by Occurrences",
+        )
+
+        fig.update_layout(
+            xaxis_title="Countries",
+            yaxis_title="Occurrences",
+            xaxis_tickangle=65,
+            yaxis_type="log",
+            template="plotly_white",
+        )
+
+        
+        fig.show()
+        #fig.write_html("analyze_countries_plotly.html")
+
+        #return country_count
+
+    def calculate_average_rating_by_country(self, country_column="Movie_countries", rating_column="Average_ratings"):
+        """
+        Calculates the average rating for each country.
+        Args:
+            country_column (str): Column containing country names.
+            rating_column (str): Column containing ratings.
+        Returns:
+            pd.DataFrame: DataFrame with countries and their average ratings.
+        """
+        if country_column not in self.dataframe.columns or rating_column not in self.dataframe.columns:
+            raise ValueError("The specified columns do not exist in the DataFrame.")
+        
+        # Separate countries and explode rows, then reset the index to handle duplicates
+        exploded_df = self.dataframe.copy()
+        exploded_df = exploded_df.assign(**{country_column: exploded_df[country_column].str.split(',') }).explode(country_column).reset_index(drop=True)
+        
+        # Strip whitespace from country names
+        exploded_df[country_column] = exploded_df[country_column].str.strip()
+
+        # Calculate average rating by country
+        avg_ratings = exploded_df.groupby(country_column)[rating_column].mean().reset_index()
+        avg_ratings.columns = ["Country", "Average_Rating"]
+
+        return avg_ratings
+    
+    def plot_average_rating_by_country(self, country_column="Movie_countries", rating_column="Average_ratings", color_scale="Blues"):
+    
+        """
+        Crée et affiche une carte choroplèthe pour visualiser les données par pays.
+        Args:
+            country_column (str): Column with countries
+            value_column (str): Name of the column containing the values to visualize.
+            title (str): Plot title.
+            color_scale (str): Color scale for the visualization.
+        """
+
+        avg_ratings = self.calculate_average_rating_by_country(country_column, rating_column)
+
+        fig = px.choropleth(
+            avg_ratings,
+            locations="Country",
+            locationmode="country names",
+            color="Average_Rating",
+            color_continuous_scale=color_scale,
+            title="Average Rating by Country")
+        
+        fig.show()
+        #fig.write_html("plot_average_rating_by_country.html")
+
+    def plot_female_percentage_evolution(self):
+        """
+        Generates a bar plot with the evolution of the percentage of female actors over the years> 1970
+        grouped by the movie genre(without Uncategorized) genres.
+        """
+        # Calculate the percentage of female actors
+        self.dataframe["Female_actor_percentage"] = (self.dataframe["Female_actors"] / (self.dataframe["Female_actors"] 
+                                                                                        + self.dataframe["Male_actors"]))*100
+
+        # Replace NaN percentages (from division by zero) with 0
+        self.dataframe["Female_actor_percentage"] = self.dataframe["Female_actor_percentage"].fillna(0)
+
+        # Extract year from Movie_release_date
+        self.dataframe["Start_year"] = self.dataframe["Movie_release_date"].astype(str).str.extract(r"(\d{4})").astype(float)
+
+        # Filter movies released after 1970
+        filtered_df = self.dataframe[self.dataframe["Start_year"] >1970]
+        filtered_df["Movie_genres"] = filtered_df["Movie_genres"].str.split(", ")
+        exploded_df = filtered_df.explode("Movie_genres")
+
+        # Exclude "Uncategorized" genres
+        exploded_df = exploded_df[exploded_df["Movie_genres"] != "Uncategorized"]
+
+        # Calculate the mean percentage of female actors
+        grouped_df = (exploded_df.groupby(["Start_year", "Movie_genres"])["Female_actor_percentage"].mean().reset_index())
+
+        # Bar plot
+        fig = px.bar(
+            grouped_df,
+            x="Start_year",
+            y="Female_actor_percentage",
+            color="Movie_genres",
+            barmode="group",
+            title="Evolution of Female Actor Percentage by Genre Over the Years (Post-1970)",
+            labels={"Female_actor_percentage": "Percentage of Female Actors (%)", "Start_year" : "Year"},
+            height=600,
+            width=1000)
+
+        fig.update_layout(
+            xaxis_title="Year",
+            yaxis_title="Percentage of Female Actors [%]",
+            legend_title="Genre",
+            template="plotly_white",
+            bargap=0.1,  
+            bargroupgap=0.0)
+
+        fig.show()
+        #fig.write_html("female_percentage_genre_evolution.html")
+
+
+    def plotly_kde(self, variables, bins=15, second_dataframe=None, save_html=False, output_dir="./plots"):
+        """
+        Plot KDE curves for the specified variables using two datasets. 
+
+        Args:
+            variables (list): Column names to plot.
+            bins (int): Number of bins for the histograms. Default is 15.
+            second_dataframe (pd.DataFrame): Second dataframe to compare with self.dataframe
+            save_html (bool): Whether to save the plots as HTML files. Default is False.
+            output_dir (str): Directory to save the HTML files if save_html is True. Default is "./plots".
+        """
+       
+        if second_dataframe is None:
+            raise ValueError("A second dataframe must be provided for comparison.")
+
+        # Create output directory if it does not exist
+        if save_html:
+            os.makedirs(output_dir, exist_ok=True)
+
+        # Generate individual plots for each variable
+        for col in variables:
+            if col not in self.dataframe.columns or col not in second_dataframe.columns:
+                raise ValueError(f"Column '{col}' is not in one or both DataFrames.")
+
+            # Prepare data
+            data_streaming = self.dataframe[col].dropna()
+            data_box_office = second_dataframe[col].dropna()
+
+            # KDE Streaming
+            kde_streaming = gaussian_kde(data_streaming)
+            x_vals_streaming = np.linspace(data_streaming.min(), data_streaming.max(), 500)
+            kde_vals_streaming = kde_streaming(x_vals_streaming)
+
+            # KDE Box Office
+            kde_box_office = gaussian_kde(data_box_office)
+            x_vals_box_office = np.linspace(data_box_office.min(), data_box_office.max(), 500)
+            kde_vals_box_office = kde_box_office(x_vals_box_office)
+
+            fig = go.Figure()
+
+            # Add KDE Streaming
+            fig.add_trace(
+                go.Scatter(
+                    x=x_vals_streaming,
+                    y=kde_vals_streaming,
+                    mode="lines",
+                    name="Streaming",
+                    line=dict(color="rgba(0, 123, 255, 0.8)", width=2)))
+
+            # KDE Box Office
+            fig.add_trace(
+                go.Scatter(
+                    x=x_vals_box_office,
+                    y=kde_vals_box_office,
+                    mode="lines",
+                    name="Box Office",
+                    line=dict(color="rgba(255, 165, 0, 0.8)", width=2)))
+
+
+            fig.update_layout(
+                title_text=f"KDE Curves for {col}",
+                xaxis_title=col,
+                yaxis_title="Density",
+                template="plotly_white",
+                showlegend=True,
+                legend=dict(itemsizing='constant', traceorder='normal'),
+                height=400,
+                width=600)
+
+
+            #if save_html:
+            #    output_path = os.path.join(output_dir, f"{col}_kde.html")
+            #    fig.write_html(output_path)
+
+            # Display the plot immediately
+            fig.show()
+
+
+   
