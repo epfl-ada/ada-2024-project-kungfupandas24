@@ -803,6 +803,7 @@ class EDA:
 
 
     def plot_gender_comparison(self, columns=["log_ROI", "Normalized_Rating"], interactive=False):
+        
         """
         Plot the number of Female and Male actors vs the columns of choice as subplots.
 
